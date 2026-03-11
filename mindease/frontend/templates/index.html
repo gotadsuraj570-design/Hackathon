@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MindEase – Mental Wellness for Youth</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg:#060e1c;--surface:rgba(255,255,255,.04);--border:rgba(255,255,255,.08);
+      --blue:#3b82f6;--purple:#8b5cf6;--green:#4ade80;--red:#ef4444;
+      --text:#e2e8f0;--muted:#64748b;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;}
+    body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+    #particles-canvas{position:fixed;inset:0;pointer-events:none;z-index:0;}
+    .bg-glow{position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 75% 55% at 15% 10%,rgba(30,58,138,.45) 0%,transparent 60%),radial-gradient(ellipse 55% 45% at 85% 85%,rgba(76,29,149,.30) 0%,transparent 60%);}
+
+    /* ── AUTH SCREEN ── */
+    #auth-screen{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(6,14,28,.97);backdrop-filter:blur(20px);animation:fadeIn .4s ease;}
+    .auth-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:36px 32px;width:100%;max-width:400px;margin:20px;}
+    .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center;}
+    .auth-logo-icon{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:22px;}
+    .auth-title{font-size:22px;font-weight:700;}
+    .auth-tabs{display:flex;background:rgba(255,255,255,.05);border-radius:12px;padding:4px;margin-bottom:24px;gap:4px;}
+    .auth-tab{flex:1;padding:9px;border:none;border-radius:9px;background:none;color:var(--muted);font-family:'Outfit',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;}
+    .auth-tab.active{background:rgba(59,130,246,.2);color:var(--blue);}
+    .auth-form{display:flex;flex-direction:column;gap:14px;}
+    .form-group{display:flex;flex-direction:column;gap:6px;}
+    .form-label{font-size:12px;color:var(--muted);letter-spacing:.5px;}
+    .form-input{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:12px;padding:12px 15px;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;transition:border-color .2s;}
+    .form-input:focus{outline:none;border-color:rgba(59,130,246,.5);}
+    .auth-btn{background:linear-gradient(135deg,var(--blue),var(--purple));border:none;border-radius:12px;padding:13px;color:#fff;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .2s;margin-top:4px;}
+    .auth-btn:hover{opacity:.9;}
+    .auth-btn:disabled{opacity:.5;cursor:not-allowed;}
+    .auth-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:10px 14px;font-size:13px;color:#fca5a5;display:none;}
+    .auth-note{text-align:center;font-size:12px;color:var(--muted);margin-top:16px;}
+    .skip-link{color:var(--blue);cursor:pointer;text-decoration:underline;}
+
+    /* ── APP ── */
+    #app{position:relative;z-index:2;display:flex;flex-direction:column;height:100vh;max-width:700px;margin:0 auto;}
+    header{display:flex;align-items:center;justify-content:space-between;padding:13px 20px;background:rgba(6,14,28,.88);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);flex-shrink:0;}
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:17px;}
+    .logo-title{font-weight:700;font-size:16px;letter-spacing:-.3px;}
+    .logo-sub{font-size:10px;color:var(--muted);letter-spacing:.8px;}
+    .header-right{display:flex;align-items:center;gap:8px;}
+    #user-pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;color:#94a3b8;}
+    #logout-btn{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:5px 10px;color:#fca5a5;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;}
+    nav{display:flex;gap:6px;padding:9px 16px;overflow-x:auto;background:rgba(6,14,28,.7);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);scrollbar-width:none;flex-shrink:0;}
+    nav::-webkit-scrollbar{display:none;}
+    .nav-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;border:1px solid transparent;background:none;color:var(--muted);font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .25s;}
+    .nav-btn.active{color:var(--blue);background:rgba(59,130,246,.13);border-color:rgba(59,130,246,.25);}
+    main{flex:1;overflow-y:auto;padding:22px 20px;scrollbar-width:thin;scrollbar-color:#1e3a5f transparent;}
+    main::-webkit-scrollbar{width:4px;}
+    main::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:2px;}
+    .tab{display:none;animation:fadeIn .3s ease;}
+    .tab.active{display:block;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ── CARDS ── */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px;}
+    .card-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .resource-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;cursor:pointer;transition:background .25s,transform .25s,border-color .25s;}
+    .resource-card:hover{background:rgba(59,130,246,.10);border-color:rgba(59,130,246,.3);transform:translateY(-2px);}
+    .rc-icon{font-size:22px;margin-bottom:7px;}.rc-title{font-weight:600;font-size:14px;margin-bottom:3px;}
+    .rc-desc{font-size:12px;color:var(--muted);margin-bottom:8px;}
+    .rc-tag{font-size:11px;color:var(--blue);background:rgba(59,130,246,.1);border-radius:6px;padding:3px 8px;display:inline-block;}
+    .sec-label{font-size:11px;color:var(--muted);letter-spacing:1.2px;margin-bottom:10px;}
+    .glow-text{background:linear-gradient(135deg,#93c5fd,#c4b5fd,#86efac);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:'Playfair Display',serif;font-style:italic;}
+    .mood-row{display:flex;justify-content:space-around;margin-bottom:4px;}
+    .mood-btn{display:flex;flex-direction:column;align-items:center;gap:7px;padding:11px 10px;border-radius:14px;border:1px solid transparent;background:none;cursor:pointer;transition:all .25s;font-family:'Outfit',sans-serif;}
+    .mood-btn:hover{transform:translateY(-4px);}
+    .mood-emoji{font-size:26px;}.mood-label{font-size:10px;font-weight:500;color:var(--muted);}
+    #mood-feedback{margin-top:12px;padding:12px 14px;border-radius:12px;font-size:13px;text-align:center;display:none;}
+    .emergency{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.22);border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;margin-top:20px;}
+    .em-title{font-weight:600;font-size:14px;color:#fca5a5;margin-bottom:3px;}.em-numbers{font-size:12px;color:var(--muted);}
+    .dot-pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.3)}}
+
+    /* ── CHAT ── */
+    #chat-tab{display:none;flex-direction:column;height:100%;padding:0;}
+    #chat-tab.active{display:flex;}
+    .chat-header{display:flex;align-items:center;gap:12px;padding:12px 20px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);flex-shrink:0;}
+    .bot-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:15px;}
+    .bot-name{font-weight:600;font-size:14px;}.bot-status{font-size:11px;color:var(--green);}
+    .privacy-badge{margin-left:auto;font-size:11px;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:4px 9px;}
+
+    /* ── WAVE ── */
+    #wave-panel{flex-shrink:0;padding:12px 20px 10px;background:rgba(6,14,28,.75);border-bottom:1px solid var(--border);transition:border-color .5s;}
+    .wave-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+    .wave-title{font-size:11px;letter-spacing:1px;color:var(--muted);}
+    #crisis-badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;display:none;animation:badgePop .4s cubic-bezier(.175,.885,.32,1.275);}
+    @keyframes badgePop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+    #wave-canvas{width:100%;height:64px;border-radius:12px;display:block;}
+    .wave-legend{display:flex;gap:14px;margin-top:7px;flex-wrap:wrap;}
+    .legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);}
+    .legend-dot{width:8px;height:8px;border-radius:50%;}
+
+    /* ── CRISIS ALERT ── */
+    #crisis-alert{flex-shrink:0;display:none;padding:14px 20px;background:rgba(239,68,68,.10);border-bottom:1px solid rgba(239,68,68,.3);animation:slideDown .4s ease;}
+    @keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+    .alert-inner{display:flex;gap:12px;align-items:flex-start;}
+    .alert-title{font-weight:700;font-size:14px;color:#fca5a5;margin-bottom:4px;}
+    .alert-msg{font-size:13px;color:#94a3b8;line-height:1.5;margin-bottom:10px;}
+    .helplines{display:flex;flex-wrap:wrap;gap:8px;}
+    .helpline-btn{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:'Outfit',sans-serif;transition:transform .2s;}
+    .helpline-btn:hover{transform:scale(1.05);}
+    .hl-primary{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;}
+    .hl-secondary{background:rgba(255,255,255,.08);color:#e2e8f0;border:1px solid rgba(255,255,255,.15)!important;}
+    .alert-close{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;flex-shrink:0;}
+
+    /* ── MESSAGES ── */
+    #messages{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:13px;scrollbar-width:thin;scrollbar-color:#1e3a5f transparent;}
+    #messages::-webkit-scrollbar{width:3px;}
+    #messages::-webkit-scrollbar-thumb{background:#1e3a5f;}
+    .msg{display:flex;align-items:flex-end;gap:8px;animation:fadeIn .3s ease;}
+    .msg.user{justify-content:flex-end;}
+    .msg-bubble{max-width:72%;padding:11px 15px;font-size:14px;line-height:1.6;border-radius:18px 18px 18px 4px;background:rgba(255,255,255,.07);border:1px solid var(--border);}
+    .msg.user .msg-bubble{background:linear-gradient(135deg,var(--blue),var(--purple));border:none;border-radius:18px 18px 4px 18px;}
+    .typing{display:flex;align-items:center;gap:5px;padding:12px 16px;}
+    .typing span{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce 1.2s ease-in-out infinite;}
+    .typing span:nth-child(2){animation-delay:.2s;}.typing span:nth-child(3){animation-delay:.4s;}
+    @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-7px)}}
+    .chat-input-area{padding:12px 20px 14px;border-top:1px solid var(--border);background:rgba(6,14,28,.92);backdrop-filter:blur(18px);flex-shrink:0;}
+    .chat-row{display:flex;gap:10px;align-items:center;}
+    #chat-input{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:14px;padding:11px 15px;color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;}
+    #chat-input:focus{outline:none;border-color:rgba(59,130,246,.4);}
+    .send-btn{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .2s;flex-shrink:0;}
+    .send-btn:hover{transform:scale(1.1);}
+    .quick-prompts{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;}
+    .qp-btn{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:20px;padding:5px 12px;color:#94a3b8;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;transition:background .2s;}
+    .qp-btn:hover{background:rgba(255,255,255,.1);}
+
+    /* ── BREATHE ── */
+    #breathe-tab{text-align:center;}
+    .breath-wrap{position:relative;display:flex;align-items:center;justify-content:center;margin:34px auto;width:270px;height:270px;}
+    .breath-ring{position:absolute;border-radius:50%;border:1.5px solid rgba(99,179,237,.25);animation:ringPulse 3s ease-in-out infinite;}
+    .breath-ring:nth-child(1){width:210px;height:210px;}.breath-ring:nth-child(2){width:255px;height:255px;animation-delay:.6s;border-color:rgba(99,179,237,.12);}
+    @keyframes ringPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.05);opacity:.15}}
+    #breath-orb{width:155px;height:155px;border-radius:50%;cursor:pointer;background:radial-gradient(circle at 35% 35%,rgba(147,197,253,.9),rgba(139,92,246,.7));box-shadow:0 0 40px rgba(99,179,237,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:transform 3s cubic-bezier(.4,0,.2,1),box-shadow 3s ease;user-select:none;}
+    #breath-orb.inhale{transform:scale(1.4);box-shadow:0 0 70px rgba(99,179,237,.6);}
+    #breath-orb.exhale,#breath-orb.rest{transform:scale(.85);box-shadow:0 0 20px rgba(99,179,237,.2);}
+    #breath-orb.hold{transform:scale(1.4);}
+    .orb-text{font-size:13px;font-weight:600;color:#fff;}
+    .breath-phases{display:flex;justify-content:center;gap:26px;margin-bottom:24px;}
+    .phase-item{text-align:center;}.phase-sec{font-size:20px;font-weight:700;color:#334155;transition:color .5s;}.phase-sec.active{color:#93c5fd;}
+    .phase-name{font-size:11px;color:#1e293b;}
+    .breath-counter{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 26px;display:inline-block;margin-bottom:16px;}
+    .counter-num{font-size:32px;font-weight:700;color:#93c5fd;}.counter-label{font-size:12px;color:var(--muted);}
+    .reset-btn{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:9px 22px;color:#94a3b8;font-family:'Outfit',sans-serif;font-size:13px;cursor:pointer;}
+
+    /* ── RESOURCES ── */
+    .res-section{margin-bottom:22px;}.res-section-label{font-size:12px;letter-spacing:1px;margin-bottom:11px;}
+    .res-item{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .2s,border-color .2s;margin-bottom:8px;font-size:14px;}
+    .res-item:hover{background:rgba(59,130,246,.10);border-color:rgba(59,130,246,.3);}
+    .chevron{color:var(--muted);font-size:16px;}
+
+    /* ── TOAST ── */
+    #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(30,41,59,.95);border:1px solid var(--border);border-radius:12px;padding:10px 20px;font-size:13px;z-index:999;transition:transform .3s ease;pointer-events:none;}
+    #toast.show{transform:translateX(-50%) translateY(0);}
+
+    /* ── SPINNER ── */
+    .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<canvas id="particles-canvas"></canvas>
+<div class="bg-glow"></div>
+<div id="toast"></div>
+
+<!-- ══ AUTH SCREEN ══ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">🧠</div>
+      <div><div class="auth-title">MindEase</div><div style="font-size:12px;color:var(--muted)">Safe Space for Youth</div></div>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login"  onclick="showAuthTab('login')">Login</button>
+      <button class="auth-tab"        id="tab-signup" onclick="showAuthTab('signup')">Sign Up</button>
+    </div>
+    <div id="auth-error" class="auth-err"></div>
+
+    <!-- LOGIN -->
+    <div id="login-form" class="auth-form">
+      <div class="form-group"><label class="form-label">EMAIL</label><input class="form-input" id="login-email" type="email" placeholder="you@example.com"/></div>
+      <div class="form-group"><label class="form-label">PASSWORD</label><input class="form-input" id="login-pass" type="password" placeholder="••••••••"/></div>
+      <button class="auth-btn" id="login-btn" onclick="handleLogin()">Login</button>
+    </div>
+
+    <!-- SIGNUP -->
+    <div id="signup-form" class="auth-form" style="display:none">
+      <div class="form-group"><label class="form-label">DISPLAY NAME (optional)</label><input class="form-input" id="signup-name" type="text" placeholder="Anonymous"/></div>
+      <div class="form-group"><label class="form-label">EMAIL</label><input class="form-input" id="signup-email" type="email" placeholder="you@example.com"/></div>
+      <div class="form-group"><label class="form-label">PASSWORD</label><input class="form-input" id="signup-pass" type="password" placeholder="Min. 6 characters"/></div>
+      <button class="auth-btn" id="signup-btn" onclick="handleSignup()">Create Account</button>
+    </div>
+
+    <div class="auth-note">Your data is private & anonymous. <span class="skip-link" onclick="skipAuth()">Continue as guest →</span></div>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div id="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🧠</div>
+      <div><div class="logo-title">MindEase</div><div class="logo-sub">SAFE SPACE FOR YOUTH</div></div>
+    </div>
+    <div class="header-right">
+      <div id="user-pill"><div class="dot-pulse"></div><span id="user-name-display">Anonymous</span></div>
+      <button id="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <nav>
+    <button class="nav-btn active" data-tab="home">🏠 Home</button>
+    <button class="nav-btn" data-tab="chat">💬 Talk Now</button>
+    <button class="nav-btn" data-tab="breathe">🫁 Breathe</button>
+    <button class="nav-btn" data-tab="resources">📚 Resources</button>
+  </nav>
+
+  <main id="main-content">
+
+    <!-- HOME -->
+    <div class="tab active" id="home-tab">
+      <div style="margin-bottom:26px">
+        <p class="sec-label">WELCOME BACK</p>
+        <h1 style="font-size:26px;font-weight:700;line-height:1.25;margin-bottom:8px">How are you feeling <br><span class="glow-text">today?</span></h1>
+        <p style="color:var(--muted);font-size:14px;line-height:1.6">Your feelings are valid. This is a judgment-free zone.</p>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <p class="sec-label" style="text-align:center">TAP YOUR CURRENT MOOD</p>
+        <div class="mood-row" id="mood-row"></div>
+        <div id="mood-feedback"></div>
+      </div>
+      <p class="sec-label">QUICK SUPPORT</p>
+      <div class="card-grid" style="margin-bottom:20px">
+        <div class="resource-card" onclick="switchTab('breathe')"><div class="rc-icon">🫁</div><div class="rc-title">Breathing Exercise</div><div class="rc-desc">4-7-8 calm technique</div><span class="rc-tag">3 min</span></div>
+        <div class="resource-card" onclick="switchTab('chat')"><div class="rc-icon">🌊</div><div class="rc-title">Sentiment Wave</div><div class="rc-desc">Live mood tracker + crisis alert</div><span class="rc-tag">New ✨</span></div>
+        <div class="resource-card" onclick="switchTab('resources')"><div class="rc-icon">📓</div><div class="rc-title">Journal Prompt</div><div class="rc-desc">Guided self-reflection</div><span class="rc-tag">5 min</span></div>
+        <div class="resource-card" onclick="switchTab('resources')"><div class="rc-icon">🤝</div><div class="rc-title">Peer Circle</div><div class="rc-desc">Anonymous support group</div><span class="rc-tag">Live</span></div>
+      </div>
+      <div class="emergency"><div style="font-size:26px">🆘</div><div><div class="em-title">Need immediate help?</div><div class="em-numbers">iCall: 9152987821 &nbsp;·&nbsp; Vandrevala: 1860-2662-345</div></div></div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="tab" id="chat-tab">
+      <div class="chat-header">
+        <div class="bot-avatar">🤍</div>
+        <div><div class="bot-name">MindEase AI</div><div class="bot-status">● Online · Fully confidential</div></div>
+        <div class="privacy-badge">🔒 Private</div>
+      </div>
+
+      <!-- SENTIMENT WAVE -->
+      <div id="wave-panel">
+        <div class="wave-top">
+          <span class="wave-title">🌊 SENTIMENT WAVE — LIVE MOOD</span>
+          <span id="crisis-badge"></span>
+        </div>
+        <canvas id="wave-canvas" height="64"></canvas>
+        <div class="wave-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#4ade80"></div>Positive</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#facc15"></div>Neutral</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#fb923c"></div>Anxious</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Crisis</div>
+          <div class="legend-item" style="margin-left:auto"><span id="wave-score-label" style="font-size:11px;color:var(--muted)">Awaiting messages…</span></div>
+        </div>
+      </div>
+
+      <!-- CRISIS ALERT -->
+      <div id="crisis-alert">
+        <div class="alert-inner">
+          <div style="font-size:22px">🚨</div>
+          <div style="flex:1">
+            <div class="alert-title" id="alert-title">We noticed you might be struggling</div>
+            <div class="alert-msg" id="alert-msg">Your conversation suggests you may be going through a very difficult time. You don't have to face this alone.</div>
+            <div class="helplines" id="helplines-list">
+              <button class="helpline-btn hl-primary">📞 iCall — 9152987821</button>
+              <button class="helpline-btn hl-secondary" onclick="switchTab('breathe')">🫁 Try Breathing First</button>
+            </div>
+          </div>
+          <button class="alert-close" onclick="dismissAlert()">✕</button>
+        </div>
+      </div>
+
+      <div id="messages"></div>
+      <div class="chat-input-area">
+        <div class="chat-row">
+          <input id="chat-input" type="text" placeholder="Share what's on your mind…"/>
+          <button class="send-btn" id="send-btn">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+        <div class="quick-prompts">
+          <button class="qp-btn" data-prompt="I feel so hopeless and tired of everything">Hopeless 😔</button>
+          <button class="qp-btn" data-prompt="I'm very anxious about my exams">Exam anxiety 😟</button>
+          <button class="qp-btn" data-prompt="I feel happy today!">Feeling good 😊</button>
+          <button class="qp-btn" data-prompt="I don't want to talk to anyone anymore">Withdrawing 😶</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BREATHE -->
+    <div class="tab" id="breathe-tab">
+      <p class="sec-label" style="text-align:center">4-7-8 TECHNIQUE</p>
+      <h2 style="text-align:center;font-size:23px;font-weight:700;margin-bottom:6px">Breathing Exercise</h2>
+      <p style="text-align:center;color:var(--muted);font-size:13px">Activates your parasympathetic nervous system</p>
+      <div class="breath-wrap">
+        <div class="breath-ring"></div><div class="breath-ring"></div>
+        <div id="breath-orb"><div style="font-size:24px">🫁</div><div class="orb-text" id="orb-label">Tap to Start</div></div>
+      </div>
+      <div class="breath-phases">
+        <div class="phase-item"><div class="phase-sec" id="phase-inhale">4s</div><div class="phase-name">Inhale</div></div>
+        <div class="phase-item"><div class="phase-sec" id="phase-hold">7s</div><div class="phase-name">Hold</div></div>
+        <div class="phase-item"><div class="phase-sec" id="phase-exhale">8s</div><div class="phase-name">Exhale</div></div>
+      </div>
+      <div class="breath-counter"><div class="counter-num" id="breath-count">0</div><div class="counter-label">cycles completed</div></div>
+      <br><br>
+      <button class="reset-btn" id="breath-reset">Reset</button>
+    </div>
+
+    <!-- RESOURCES -->
+    <div class="tab" id="resources-tab">
+      <h2 style="font-size:21px;font-weight:700;margin-bottom:5px">Resources & Support</h2>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:20px">Curated for Indian youth and students</p>
+      <div class="res-section">
+        <div class="res-section-label" style="color:#4ade80">🧘 SELF-CARE</div>
+        <div class="res-item"><span>5-minute mindfulness meditation</span><span class="chevron">›</span></div>
+        <div class="res-item"><span>Progressive muscle relaxation</span><span class="chevron">›</span></div>
+        <div class="res-item"><span>Gratitude journaling template</span><span class="chevron">›</span></div>
+        <div class="res-item"><span>Sleep hygiene checklist</span><span class="chevron">›</span></div>
+      </div>
+      <div class="res-section">
+        <div class="res-section-label" style="color:#60a5fa">📖 LEARN</div>
+        <div class="res-item"><span>Understanding anxiety & stress</span><span class="chevron">›</span></div>
+        <div class="res-item"><span>Managing exam pressure</span><span class="chevron">›</span></div>
+        <div class="res-item"><span>Digital wellbeing guide</span><span class="chevron">›</span></div>
+        <div class="res-item"><span>Building healthy relationships</span><span class="chevron">›</span></div>
+      </div>
+      <div class="res-section">
+        <div class="res-section-label" style="color:#c4b5fd">🤝 CONNECT</div>
+        <div class="res-item"><span>Anonymous peer support circles</span><span class="chevron">›</span></div>
+        <div class="res-item"><span>iCall counselling (free) – 9152987821</span><span class="chevron">›</span></div>
+        <div class="res-item"><span>Vandrevala Foundation – 1860-2662-345</span><span class="chevron">›</span></div>
+        <div class="res-item"><span>NIMHANS online resources</span><span class="chevron">›</span></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────
+const API = window.location.origin; // same-origin when served by FastAPI
+let AUTH_TOKEN = localStorage.getItem('mindease_token') || null;
+let CURRENT_USER = JSON.parse(localStorage.getItem('mindease_user') || 'null');
+let IS_GUEST = false;
+
+// ── PARTICLES ───────────────────────────────────────
+(function(){
+  const c=document.getElementById('particles-canvas'),ctx=c.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}
+  window.addEventListener('resize',resize);resize();
+  function rp(){return{x:Math.random()*W,y:H+20,r:Math.random()*2+.7,speed:Math.random()*.5+.25,opacity:Math.random()*.35+.12,drift:(Math.random()-.5)*.3};}
+  for(let i=0;i<20;i++){const p=rp();p.y=Math.random()*H;pts.push(p);}
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(99,179,237,${p.opacity})`;ctx.fill();p.y-=p.speed;p.x+=p.drift;if(p.y<-10)Object.assign(p,rp());});
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── TOAST ────────────────────────────────────────────
+function showToast(msg, duration=2800){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),duration);
+}
+
+// ── AUTH UI ──────────────────────────────────────────
+function showAuthTab(tab){
+  document.getElementById('login-form').style.display  = tab==='login'  ? 'flex':'none';
+  document.getElementById('signup-form').style.display = tab==='signup' ? 'flex':'none';
+  document.getElementById('tab-login').classList.toggle('active',  tab==='login');
+  document.getElementById('tab-signup').classList.toggle('active', tab==='signup');
+  document.getElementById('auth-error').style.display='none';
+}
+
+function showAuthError(msg){
+  const el=document.getElementById('auth-error');el.textContent=msg;el.style.display='block';
+}
+
+function setLoading(btnId, loading){
+  const btn=document.getElementById(btnId);
+  btn.disabled=loading;
+  btn.innerHTML=loading?'<span class="spinner"></span>':btn.dataset.label||btn.textContent;
+}
+
+async function handleLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass =document.getElementById('login-pass').value;
+  if(!email||!pass){showAuthError('Please fill in all fields');return;}
+  document.getElementById('login-btn').dataset.label='Login';
+  setLoading('login-btn',true);
+  try{
+    const res=await fetch(`${API}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.detail||'Login failed');
+    onAuthSuccess(data);
+  }catch(e){showAuthError(e.message);}
+  finally{setLoading('login-btn',false);}
+}
+
+async function handleSignup(){
+  const name =document.getElementById('signup-name').value.trim()||'Anonymous';
+  const email=document.getElementById('signup-email').value.trim();
+  const pass =document.getElementById('signup-pass').value;
+  if(!email||!pass){showAuthError('Email and password are required');return;}
+  document.getElementById('signup-btn').dataset.label='Create Account';
+  setLoading('signup-btn',true);
+  try{
+    const res=await fetch(`${API}/api/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass,display_name:name})});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.detail||'Registration failed');
+    onAuthSuccess(data);
+  }catch(e){showAuthError(e.message);}
+  finally{setLoading('signup-btn',false);}
+}
+
+function onAuthSuccess(data){
+  AUTH_TOKEN   = data.access_token;
+  CURRENT_USER = data.user;
+  localStorage.setItem('mindease_token', AUTH_TOKEN);
+  localStorage.setItem('mindease_user',  JSON.stringify(CURRENT_USER));
+  hideAuthScreen();
+  document.getElementById('user-name-display').textContent = CURRENT_USER.display_name||'User';
+  showToast(`Welcome back, ${CURRENT_USER.display_name} 👋`);
+  loadChatHistory();
+}
+
+function skipAuth(){
+  IS_GUEST=true;
+  hideAuthScreen();
+  showToast('Continuing as guest — your chat won\'t be saved 🔒');
+}
+
+function hideAuthScreen(){
+  const s=document.getElementById('auth-screen');
+  s.style.opacity='0';s.style.transition='opacity .3s';
+  setTimeout(()=>s.style.display='none',300);
+}
+
+function logout(){
+  AUTH_TOKEN=null;CURRENT_USER=null;IS_GUEST=false;
+  localStorage.removeItem('mindease_token');
+  localStorage.removeItem('mindease_user');
+  document.getElementById('auth-screen').style.cssText='display:flex;opacity:1;';
+  document.getElementById('messages').innerHTML='';
+  sentimentHistory=[];consecutiveCrisis=0;alertShown=false;
+  drawWave();
+  showToast('Logged out successfully');
+}
+
+// Check if already logged in
+window.addEventListener('DOMContentLoaded',()=>{
+  if(AUTH_TOKEN && CURRENT_USER){
+    hideAuthScreen();
+    document.getElementById('user-name-display').textContent=CURRENT_USER.display_name||'User';
+    loadChatHistory();
+  }
+});
+
+// ── AUTH API HELPER ──────────────────────────────────
+async function apiCall(path, method='GET', body=null){
+  const headers={'Content-Type':'application/json'};
+  if(AUTH_TOKEN) headers['Authorization']=`Bearer ${AUTH_TOKEN}`;
+  const opts={method,headers};
+  if(body) opts.body=JSON.stringify(body);
+  const res=await fetch(`${API}${path}`,opts);
+  if(res.status===401){logout();throw new Error('Session expired');}
+  return res;
+}
+
+// ── TAB NAVIGATION ───────────────────────────────────
+const mainContent=document.getElementById('main-content');
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const t=document.getElementById(id+'-tab');t.classList.add('active');
+  document.querySelector(`[data-tab="${id}"]`).classList.add('active');
+  if(id==='chat'){mainContent.style.cssText='padding:0;overflow:hidden;display:flex;flex-direction:column;height:100%;';t.style.flex='1';t.style.minHeight='0';}
+  else{mainContent.style.cssText='padding:22px 20px;overflow:auto;display:block;height:auto;';}
+}
+document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+
+// ── MOOD SELECTOR ────────────────────────────────────
+const moodsData=[
+  {emoji:'😊',label:'Happy',  color:'#4ade80',msg:"Glad you're feeling happy! Keep spreading that positivity 🌟"},
+  {emoji:'😌',label:'Calm',   color:'#60a5fa',msg:"Feeling calm is wonderful. Take a moment to appreciate it 💙"},
+  {emoji:'😐',label:'Neutral',color:'#facc15',msg:"Neutral days are okay too. Would you like a quick mood boost? 🌤️"},
+  {emoji:'😟',label:'Anxious',color:'#fb923c',msg:"Anxiety can be tough. Try the breathing exercise to find calm 🫁"},
+  {emoji:'😔',label:'Low',    color:'#f87171',msg:"It's okay to feel low sometimes. You don't have to face it alone 💙"},
+];
+const moodRow=document.getElementById('mood-row');
+const moodFeedback=document.getElementById('mood-feedback');
+moodsData.forEach(mood=>{
+  const btn=document.createElement('button');btn.className='mood-btn';
+  btn.innerHTML=`<span class="mood-emoji">${mood.emoji}</span><span class="mood-label">${mood.label}</span>`;
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.mood-btn').forEach(b=>{b.classList.remove('selected');b.querySelector('.mood-label').style.color='var(--muted)';b.style.borderColor='transparent';});
+    btn.classList.add('selected');btn.querySelector('.mood-label').style.color=mood.color;btn.style.borderColor=mood.color+'55';
+    moodFeedback.style.cssText=`display:block;background:${mood.color}14;border:1px solid ${mood.color}35;color:${mood.color};`;
+    moodFeedback.textContent=mood.msg;
+  });
+  moodRow.appendChild(btn);
+});
+
+// ── SENTIMENT WAVE ───────────────────────────────────
+const waveCanvas=document.getElementById('wave-canvas');
+const waveCtx=waveCanvas.getContext('2d');
+const scoreLabel=document.getElementById('wave-score-label');
+const crisisBadge=document.getElementById('crisis-badge');
+let sentimentHistory=[];
+let consecutiveCrisis=0;
+let alertShown=false;
+
+function resizeWave(){
+  waveCanvas.width=waveCanvas.offsetWidth*devicePixelRatio;
+  waveCanvas.height=64*devicePixelRatio;
+  waveCtx.scale(devicePixelRatio,devicePixelRatio);
+  drawWave();
+}
+window.addEventListener('resize',resizeWave);
+setTimeout(resizeWave,120);
+
+function scoreColor(s){if(s>=40)return'#4ade80';if(s>=-20)return'#facc15';if(s>=-60)return'#fb923c';return'#ef4444';}
+function scoreLevel(s){if(s>=40)return'positive';if(s>=-20)return'neutral';if(s>=-60)return'anxious';return'crisis';}
+
+function drawWave(){
+  const W=waveCanvas.offsetWidth,H=64;
+  waveCtx.clearRect(0,0,W,H);
+  if(!sentimentHistory.length){
+    waveCtx.setLineDash([4,6]);waveCtx.strokeStyle='rgba(255,255,255,.1)';waveCtx.lineWidth=1.5;
+    waveCtx.beginPath();waveCtx.moveTo(0,H/2);waveCtx.lineTo(W,H/2);waveCtx.stroke();
+    waveCtx.setLineDash([]);return;
+  }
+  const pts=sentimentHistory.slice(-30);
+  const stepX=W/Math.max(pts.length-1,1);
+  const toY=s=>H/2-(s/100)*(H/2-10);
+  const points=pts.map((s,i)=>({x:i*stepX,y:toY(s),score:s}));
+  const dangerY=toY(-60);
+  waveCtx.fillStyle='rgba(239,68,68,.07)';waveCtx.fillRect(0,dangerY,W,H-dangerY);
+  waveCtx.fillStyle='rgba(239,68,68,.3)';waveCtx.font='9px Outfit,sans-serif';waveCtx.fillText('CRISIS ZONE',4,dangerY-3);
+  if(points.length>1){
+    const g=waveCtx.createLinearGradient(0,0,W,0);
+    points.forEach((p,i)=>g.addColorStop(i/(points.length-1),scoreColor(p.score)));
+    waveCtx.beginPath();waveCtx.moveTo(points[0].x,H);waveCtx.lineTo(points[0].x,points[0].y);
+    points.forEach((p,i)=>{if(!i)return;const pv=points[i-1],cx=(pv.x+p.x)/2;waveCtx.bezierCurveTo(cx,pv.y,cx,p.y,p.x,p.y);});
+    waveCtx.lineTo(points[points.length-1].x,H);waveCtx.closePath();
+    const ag=waveCtx.createLinearGradient(0,0,0,H);
+    ag.addColorStop(0,scoreColor(pts[pts.length-1])+'44');ag.addColorStop(1,'transparent');
+    waveCtx.fillStyle=ag;waveCtx.fill();
+    waveCtx.beginPath();waveCtx.moveTo(points[0].x,points[0].y);
+    points.forEach((p,i)=>{if(!i)return;const pv=points[i-1],cx=(pv.x+p.x)/2;waveCtx.bezierCurveTo(cx,pv.y,cx,p.y,p.x,p.y);});
+    waveCtx.strokeStyle=g;waveCtx.lineWidth=2.5;waveCtx.setLineDash([]);waveCtx.stroke();
+  }
+  const last=points[points.length-1];
+  waveCtx.beginPath();waveCtx.arc(last.x,last.y,5,0,Math.PI*2);waveCtx.fillStyle=scoreColor(pts[pts.length-1]);waveCtx.fill();
+  waveCtx.beginPath();waveCtx.arc(last.x,last.y,9,0,Math.PI*2);waveCtx.strokeStyle=scoreColor(pts[pts.length-1])+'55';waveCtx.lineWidth=2;waveCtx.stroke();
+}
+
+function pushSentiment(score,level,crisis,helplines){
+  sentimentHistory.push(score);
+  const color=scoreColor(score);
+  const labels={positive:'😊 Positive',neutral:'😐 Neutral',anxious:'😟 Anxious',crisis:'🚨 Crisis Detected'};
+  crisisBadge.style.display='inline-block';
+  crisisBadge.textContent=labels[scoreLevel(score)];
+  crisisBadge.style.cssText=`display:inline-block;background:${color}20;border:1px solid ${color}55;color:${color};font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;`;
+  scoreLabel.textContent=`Mood score: ${score>0?'+':''}${score}`;scoreLabel.style.color=color;
+  document.getElementById('wave-panel').style.borderBottomColor=color+'66';
+  drawWave();
+  if(level==='crisis')consecutiveCrisis++;else consecutiveCrisis=0;
+  if(crisis&&!alertShown){
+    showCrisisAlert(level,helplines);alertShown=true;
+  }
+}
+
+function showCrisisAlert(level,helplines){
+  const titles={critical:'⚠️ We are concerned about your safety',high:'We noticed you might be struggling',medium:'Checking in on you 💙'};
+  const msgs={
+    critical:'Your message suggests you may be in crisis. Trained counsellors are available right now — please reach out.',
+    high:"Your conversation shows signs of significant distress. You don't have to face this alone.",
+    medium:"It sounds like things are difficult right now. Professional support is available if you need it."
+  };
+  document.getElementById('alert-title').textContent=titles[level]||titles.high;
+  document.getElementById('alert-msg').textContent=msgs[level]||msgs.high;
+  if(helplines){
+    const hl=document.getElementById('helplines-list');hl.innerHTML='';
+    helplines.slice(0,2).forEach((h,i)=>{
+      const btn=document.createElement('button');
+      btn.className='helpline-btn '+(i===0?'hl-primary':'hl-secondary');
+      btn.textContent=`📞 ${h.name} — ${h.number}`;hl.appendChild(btn);
+    });
+    const bBtn=document.createElement('button');bBtn.className='helpline-btn hl-secondary';
+    bBtn.textContent='🫁 Try Breathing First';bBtn.onclick=()=>switchTab('breathe');hl.appendChild(bBtn);
+  }
+  document.getElementById('crisis-alert').style.display='block';
+}
+
+function dismissAlert(){document.getElementById('crisis-alert').style.display='none';}
+
+// ── CHAT ─────────────────────────────────────────────
+const messagesEl=document.getElementById('messages');
+const chatInput =document.getElementById('chat-input');
+const sendBtnEl =document.getElementById('send-btn');
+
+function addMessage(text,from,ts){
+  const wrap=document.createElement('div');wrap.className=`msg ${from}`;
+  if(from==='bot'){const av=document.createElement('div');av.className='bot-avatar';av.textContent='🤍';wrap.appendChild(av);}
+  const bubble=document.createElement('div');bubble.className='msg-bubble';bubble.textContent=text;wrap.appendChild(bubble);
+  messagesEl.appendChild(wrap);messagesEl.scrollTop=messagesEl.scrollHeight;
+}
+
+function showTyping(){
+  const w=document.createElement('div');w.className='msg bot';w.id='typing-indicator';
+  const av=document.createElement('div');av.className='bot-avatar';av.textContent='🤍';
+  const b=document.createElement('div');b.className='msg-bubble typing';b.innerHTML='<span></span><span></span><span></span>';
+  w.appendChild(av);w.appendChild(b);messagesEl.appendChild(w);messagesEl.scrollTop=messagesEl.scrollHeight;
+}
+function removeTyping(){const t=document.getElementById('typing-indicator');if(t)t.remove();}
+
+// Fallback replies for guest mode
+const fallbackReplies={
+  crisis:"I'm really concerned. Please reach out to iCall: 9152987821 💙",
+  high:"What you're feeling sounds really painful. You don't have to carry this alone 💙",
+  medium:"It sounds tough. Have you tried the breathing exercise? It can help calm your nervous system 🫁",
+  mild_negative:"That sounds stressful. It's okay to feel this way — you're not alone 💙",
+  neutral:"Thank you for sharing. I'm here to listen 🤍",
+  positive:"That's wonderful to hear! 😊",
+  very_positive:"I love hearing that! 🌟",
+};
+
+// Client-side sentiment fallback (for guest mode)
+function clientSentiment(text){
+  const lower=text.toLowerCase();
+  const groups=[
+    {score:-95,words:['suicide','kill myself','end my life','want to die','no reason to live','self harm']},
+    {score:-75,words:['hopeless','worthless','nobody cares','give up','hate myself','empty inside']},
+    {score:-50,words:['so tired','exhausted','anxious','alone','depressed','crying','overwhelmed','stressed','panic']},
+    {score:-25,words:['worried','nervous','difficult','sad','frustrated']},
+    {score:40, words:['happy','good','great','better','calm','love','hopeful','motivated']},
+    {score:70, words:['amazing','wonderful','fantastic','much better','feeling good']},
+  ];
+  let total=0,matched=false;
+  groups.forEach(g=>g.words.forEach(w=>{if(lower.includes(w)){total+=g.score;matched=true;}}));
+  if(!matched)return{score:0,level:'neutral',crisis:false,helplines:null};
+  const s=Math.max(-100,Math.min(100,total));
+  const lv=s>=-20?'neutral':s>=-50?'mild_negative':s>=-65?'medium':s>=-85?'high':'critical';
+  const crisis=lv==='critical'||lv==='high';
+  return{score:Math.round(s),level:lv,crisis,helplines:crisis?[{name:'iCall',number:'9152987821'},{name:'Vandrevala',number:'1860-2662-345'}]:null};
+}
+
+async function sendMessage(){
+  const text=chatInput.value.trim();if(!text)return;
+  addMessage(text,'user');chatInput.value='';showTyping();
+
+  try{
+    if(!IS_GUEST && AUTH_TOKEN){
+      const res=await apiCall('/api/chat/send','POST',{content:text,role:'user'});
+      const data=await res.json();
+      removeTyping();
+      pushSentiment(data.sentiment_score,data.sentiment_level,data.crisis_detected,data.helplines);
+      addMessage(data.message,'bot');
+    } else {
+      // Guest mode: client-side analysis
+      await new Promise(r=>setTimeout(r,1400));
+      removeTyping();
+      const {score,level,crisis,helplines}=clientSentiment(text);
+      pushSentiment(score,level,crisis,helplines);
+      addMessage(fallbackReplies[level]||fallbackReplies.neutral,'bot');
+    }
+  }catch(e){
+    removeTyping();
+    addMessage("Sorry, I had trouble connecting. Please check your connection and try again.","bot");
+  }
+}
+
+sendBtnEl.addEventListener('click',sendMessage);
+chatInput.addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage();});
+document.querySelectorAll('.qp-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{switchTab('chat');setTimeout(()=>{chatInput.value=btn.dataset.prompt;sendMessage();},100);});
+});
+
+async function loadChatHistory(){
+  if(!AUTH_TOKEN||IS_GUEST)return;
+  try{
+    const res=await apiCall('/api/chat/history?limit=30');
+    const msgs=await res.json();
+    if(!Array.isArray(msgs)||!msgs.length){
+      setTimeout(()=>addMessage("Namaste 🙏 I'm MindEase — your safe, confidential space. I'll track your mood live using Sentiment Wave above. How are you doing today?","bot"),400);
+      return;
+    }
+    msgs.forEach(m=>{
+      addMessage(m.content,m.role,m.timestamp);
+      if(m.role==='user'&&m.sentiment_score!=null) sentimentHistory.push(m.sentiment_score);
+    });
+    if(sentimentHistory.length)drawWave();
+  }catch(e){
+    setTimeout(()=>addMessage("Namaste 🙏 I'm MindEase — your safe space to talk. How are you feeling today?","bot"),400);
+  }
+}
+
+// Initial greeting for guest
+if(!AUTH_TOKEN){setTimeout(()=>addMessage("Namaste 🙏 I'm MindEase — your safe, confidential space. How are you feeling today?","bot"),400);}
+
+// ── BREATHING ────────────────────────────────────────
+const breathOrb=document.getElementById('breath-orb'),orbLabel=document.getElementById('orb-label'),breathCountEl=document.getElementById('breath-count');
+let breathActive=false,breathTimer=null,breathCycles=0,phaseIdx=0;
+const phases=[
+  {name:'Breathe In',cls:'inhale',duration:4000,el:document.getElementById('phase-inhale')},
+  {name:'Hold',      cls:'hold',  duration:7000,el:document.getElementById('phase-hold')},
+  {name:'Breathe Out',cls:'exhale',duration:8000,el:document.getElementById('phase-exhale')},
+  {name:'Rest',      cls:'rest',  duration:2000,el:null},
+];
+function runBreath(){
+  [document.getElementById('phase-inhale'),document.getElementById('phase-hold'),document.getElementById('phase-exhale')].forEach(e=>e.classList.remove('active'));
+  breathOrb.className='';breathOrb.classList.add(phases[phaseIdx].cls);orbLabel.textContent=phases[phaseIdx].name;
+  if(phases[phaseIdx].el)phases[phaseIdx].el.classList.add('active');
+  if(phaseIdx===0){breathCycles++;breathCountEl.textContent=breathCycles;}
+  breathTimer=setTimeout(()=>{phaseIdx=(phaseIdx+1)%4;if(breathActive)runBreath();},phases[phaseIdx].duration);
+}
+breathOrb.addEventListener('click',()=>{
+  if(!breathActive){breathActive=true;phaseIdx=0;runBreath();}
+  else{breathActive=false;clearTimeout(breathTimer);breathOrb.className='';orbLabel.textContent='Tap to Start';}
+});
+document.getElementById('breath-reset').addEventListener('click',()=>{
+  breathActive=false;clearTimeout(breathTimer);breathCycles=0;phaseIdx=0;
+  breathCountEl.textContent='0';breathOrb.className='';orbLabel.textContent='Tap to Start';
+  [document.getElementById('phase-inhale'),document.getElementById('phase-hold'),document.getElementById('phase-exhale')].forEach(e=>e.classList.remove('active'));
+});
+
+// Enter key on auth inputs
+['login-email','login-pass','signup-name','signup-email','signup-pass'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('keydown',e=>{if(e.key==='Enter'){id.includes('login')?handleLogin():handleSignup();}});
+});
+</script>
+</body>
+</html>
